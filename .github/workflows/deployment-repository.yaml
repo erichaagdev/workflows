@@ -1,0 +1,54 @@
+name: Update deployment repository
+
+on:
+  workflow_call:
+    inputs:
+      user:
+        description: Name of the Git user (i.e. git config user.name).
+        default: $GITHUB_ACTOR
+        required: false
+        type: string
+      email:
+        description: Email of the Git user (i.e. git config user.email).
+        required: true
+        type: string
+      repository:
+        description: Deployment repository to update.
+        required: true
+        type: string
+      path:
+        description: Location of the deployment files within the repository.
+        required: true
+        type: string
+      image:
+        description: Name of the image to update.
+        required: true
+        type: string
+      version:
+        description: Version of the image to update to.
+        required: true
+        type: string
+    secrets:
+      token:
+        description: Personal access token with access to the deployment repository.
+        required: true
+
+jobs:
+  example_job:
+    name: Update deployment repository
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ inputs.repository }}
+        token: ${{ secrets.token }}
+    - name: Deployment update
+      run: |
+        git config user.name "${{ inputs.user }}"
+        git config user.email "${{ inputs.email }}"
+        cd "${{ inputs.path }}"
+        IMAGE="${{ inputs.image }}:${{ inputs.version }}"
+        kustomize edit set image "$IMAGE"
+        git commit --all --message "Deploy $IMAGE"
+        git push
